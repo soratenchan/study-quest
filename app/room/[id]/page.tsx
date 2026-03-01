@@ -80,6 +80,16 @@ export default function DashboardPage() {
       const allUsers: User[] = await res.json();
       const me = allUsers.find((u) => u.auth_id === authUser.id);
       if (!me) {
+        // このルームにいない場合、既存プロフィールのルームにリダイレクト
+        const userRes = await fetch(`/api/users?auth_id=${authUser.id}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const existing = Array.isArray(userData) && userData.length > 0 ? userData[0] : null;
+          if (existing && existing.room_id !== roomId) {
+            router.replace(`/room/${existing.room_id}`);
+            return;
+          }
+        }
         router.replace(`/room/${roomId}/setup`);
         return;
       }

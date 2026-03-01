@@ -31,15 +31,16 @@ export default function SetupPage() {
           return;
         }
 
-        // 既に同じauth_idのユーザーがこのルームに存在するか確認
+        // 既にプロフィールが存在するか確認 (1ユーザー = 1ルーム)
         const existingRes = await fetch(`/api/users?auth_id=${authUser.id}`);
         if (existingRes.ok) {
           const existingUsers = await existingRes.json();
-          const existingInRoom = Array.isArray(existingUsers)
-            ? existingUsers.find((u: User) => u.room_id === roomId)
+          const existingUser = Array.isArray(existingUsers) && existingUsers.length > 0
+            ? existingUsers[0]
             : null;
-          if (existingInRoom) {
-            router.replace(`/room/${roomId}`);
+          if (existingUser) {
+            // 既存のルームにリダイレクト（別ルームの招待でもそのまま既存ルームへ）
+            router.replace(`/room/${existingUser.room_id}`);
             return;
           }
         }

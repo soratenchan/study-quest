@@ -18,19 +18,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'room_id, name, and avatar are required' }, { status: 400 });
     }
 
-    // 既に同じauth_idのユーザーが存在するか確認
+    // 既存ユーザーチェック (maybeSingle = 0件でもエラーにならない)
     const { data: existing } = await supabase
       .from('users')
       .select('*')
       .eq('auth_id', authUser.id)
-      .eq('room_id', room_id)
-      .single();
+      .maybeSingle();
 
     if (existing) {
-      // 既存ユーザーを返す
       return NextResponse.json(existing, { status: 200 });
     }
 
+    // 新規挿入
     const { data, error } = await supabase
       .from('users')
       .insert({ room_id, name, avatar, auth_id: authUser.id })
@@ -38,6 +37,15 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      // 23505 = unique_violation: 極稀な競合 → 既存ユーザーを返す
+      if (error.code === '23505') {
+        const { data: raceExisting } = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_id', authUser.id)
+          .single();
+        return NextResponse.json(raceExisting, { status: 200 });
+      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

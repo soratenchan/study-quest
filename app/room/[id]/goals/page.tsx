@@ -107,6 +107,7 @@ export default function GoalsPage() {
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
@@ -147,6 +148,7 @@ export default function GoalsPage() {
     if (!title.trim() || !userId) return;
 
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const res = await fetch('/api/goals', {
         method: 'POST',
@@ -166,9 +168,12 @@ export default function GoalsPage() {
         setIsPublic(true);
         setShowModal(false);
         await fetchGoals();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setSubmitError(errData.error || `エラー: ${res.status}`);
       }
-    } catch {
-      // Ignore
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : '通信エラーが発生しました');
     } finally {
       setSubmitting(false);
     }
@@ -221,7 +226,7 @@ export default function GoalsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold text-[#1A1A1A]">目標</h1>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setSubmitError(null); setShowModal(true); }}
           className="px-5 py-2.5 bg-[#E4000F] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all"
         >
           + 目標を追加
@@ -273,7 +278,7 @@ export default function GoalsPage() {
             <div className="flex items-center justify-between px-6 py-4 bg-[#E4000F] rounded-t-xl border-b-[3px] border-[#2C2C2C]">
               <h2 className="text-base font-extrabold text-white">新しい目標</h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setSubmitError(null); }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white font-extrabold text-lg transition-colors"
               >
                 ×
@@ -322,6 +327,11 @@ export default function GoalsPage() {
                     </p>
                   </div>
                 </div>
+                {submitError && (
+                  <div className="p-3 bg-red-50 border-[2px] border-[#E4000F] rounded-xl text-sm font-bold text-[#E4000F]">
+                    ⚠ {submitError}
+                  </div>
+                )}
                 <div className="flex gap-3 justify-end pt-2">
                   <button
                     type="button"
