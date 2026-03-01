@@ -1,11 +1,13 @@
 export interface Room {
   id: string;
   url_token: string;
+  created_by: string | null;
   created_at: string;
 }
 
 export interface User {
   id: string;
+  auth_id: string | null;
   room_id: string;
   name: string;
   avatar: string;
@@ -22,6 +24,7 @@ export interface Goal {
   title: string;
   description: string | null;
   year: number;
+  is_public: boolean;
   created_at: string;
   tasks?: Task[];
 }

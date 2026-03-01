@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -31,25 +30,26 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="fixed inset-0 bg-black/50" />
-      <div className="relative z-10 w-full max-w-md rounded-xl bg-white shadow-xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <h2 className="text-base font-semibold text-gray-800">
+      <div className="fixed inset-0 bg-black/60" />
+      <div className="relative z-10 w-full max-w-md bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[8px_8px_0_#2C2C2C] animate-bounce-in">
+        {/* タイトルバー */}
+        <div className="flex items-center justify-between px-6 py-4 bg-[#E4000F] rounded-t-xl border-b-[3px] border-[#2C2C2C]">
+          <h2 className="text-base font-extrabold text-white">
             {title || ''}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white font-extrabold text-lg transition-colors"
           >
-            <X className="h-5 w-5" />
+            ×
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );

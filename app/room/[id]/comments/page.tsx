@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Comment, User } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 
 const STAMPS = ['👍', '🎉', '💪', '🔥', '⭐', '❤️', '👏', '🚀', '✨', '🙌', '💯', '🎯'];
 
@@ -18,7 +19,6 @@ export default function CommentsPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showStamps, setShowStamps] = useState(false);
@@ -26,12 +26,16 @@ export default function CommentsPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem(`userId_${roomId}`);
-    if (!storedUserId) {
-      router.replace(`/room/${roomId}/setup`);
-      return;
-    }
-    setUserId(storedUserId);
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      if (!authUser) { router.replace('/login'); return; }
+      const res = await fetch(`/api/users?room_id=${roomId}`);
+      if (!res.ok) { router.replace(`/room/${roomId}/setup`); return; }
+      const allUsers = await res.json();
+      const me = Array.isArray(allUsers) ? allUsers.find((u: { auth_id: string; id: string }) => u.auth_id === authUser.id) : null;
+      if (!me) { router.replace(`/room/${roomId}/setup`); return; }
+      setUserId(me.id);
+    });
   }, [roomId, router]);
 
   useEffect(() => {
@@ -39,7 +43,6 @@ export default function CommentsPage() {
 
     async function fetchData() {
       try {
-        // Fetch users to find buddy
         const usersRes = await fetch(`/api/users?room_id=${roomId}`);
         if (usersRes.ok) {
           const usersData = await usersRes.json();
@@ -51,7 +54,6 @@ export default function CommentsPage() {
           setBuddyId(buddy?.id || null);
         }
 
-        // Fetch comments for both directions
         const [sentRes, receivedRes] = await Promise.all([
           fetch(`/api/comments?from_user_id=${userId}`),
           fetch(`/api/comments?to_user_id=${userId}`),
@@ -67,7 +69,6 @@ export default function CommentsPage() {
           if (Array.isArray(data)) allComments.push(...data);
         }
 
-        // Dedupe and sort by created_at
         const uniqueMap = new Map<string, Comment>();
         for (const c of allComments) {
           uniqueMap.set(c.id, c);
@@ -78,7 +79,7 @@ export default function CommentsPage() {
           )
         );
 
-        // Mark received as read
+        // 既読処理
         const unreadIds = allComments
           .filter((c) => c.to_user_id === userId && !c.is_read)
           .map((c) => c.id);
@@ -147,9 +148,9 @@ export default function CommentsPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-gray-800 rounded animate-pulse w-40" />
+        <div className="h-10 bg-gray-200 rounded-2xl animate-pulse w-40" />
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-gray-800 rounded-xl animate-pulse" />
+          <div key={i} className="h-16 bg-gray-200 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -157,33 +158,37 @@ export default function CommentsPage() {
 
   if (!buddyId) {
     return (
-      <div className="py-16 text-center">
-        <span className="text-4xl">💬</span>
-        <p className="mt-4 text-gray-400">バディがまだいません</p>
-        <p className="text-sm text-gray-500 mt-1">
-          バディが参加したらメッセージを送れます
-        </p>
+      <div className="py-20 text-center">
+        <div className="bg-white rounded-2xl border-[3px] border-dashed border-[#2C2C2C] p-12">
+          <span className="text-5xl">💬</span>
+          <p className="mt-4 text-lg font-extrabold text-[#1A1A1A]">バディがまだいません</p>
+          <p className="text-sm text-gray-500 font-medium mt-2">
+            バディが参加したらメッセージを送れます
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-180px)] md:h-[calc(100vh-120px)]">
-      <div className="flex items-center gap-2 mb-4">
-        <h1 className="text-2xl font-bold text-gray-100">コメント</h1>
+      {/* ヘッダー */}
+      <div className="flex items-center gap-3 mb-4">
+        <h1 className="text-2xl font-extrabold text-[#1A1A1A]">コメント</h1>
         {buddyUser && (
-          <span className="text-sm text-gray-400">
-            with {buddyUser.avatar} {buddyUser.name}
-          </span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[0_2px_0_#2C2C2C]">
+            <span>{buddyUser.avatar}</span>
+            <span className="text-sm font-extrabold text-[#1A1A1A]">{buddyUser.name}</span>
+          </div>
         )}
       </div>
 
-      {/* Messages area */}
+      {/* メッセージエリア */}
       <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
         {comments.length === 0 && (
-          <div className="py-12 text-center">
-            <span className="text-3xl">👋</span>
-            <p className="mt-3 text-gray-400">最初のメッセージを送ろう</p>
+          <div className="py-12 text-center bg-white rounded-2xl border-[3px] border-dashed border-[#2C2C2C]">
+            <span className="text-4xl">👋</span>
+            <p className="mt-3 font-extrabold text-[#1A1A1A]">最初のメッセージを送ろう</p>
           </div>
         )}
 
@@ -197,28 +202,32 @@ export default function CommentsPage() {
               className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex items-end gap-2 max-w-[80%] ${isMine ? 'flex-row-reverse' : ''}`}>
-                <span className="text-lg flex-shrink-0">{sender?.avatar || '👤'}</span>
+                <div className="w-9 h-9 rounded-xl border-[2px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-lg flex-shrink-0 shadow-[1px_1px_0_#2C2C2C]">
+                  {sender?.avatar || '👤'}
+                </div>
                 <div>
                   {comment.stamp ? (
                     <div
-                      className={`px-4 py-3 rounded-2xl text-4xl ${
-                        isMine ? 'bg-indigo-600/20' : 'bg-gray-800/50'
+                      className={`px-4 py-3 rounded-2xl text-4xl border-[2px] border-[#2C2C2C] ${
+                        isMine
+                          ? 'bg-[#FFF3CD] shadow-[2px_2px_0_#2C2C2C]'
+                          : 'bg-white shadow-[2px_2px_0_#2C2C2C]'
                       }`}
                     >
                       {comment.stamp}
                     </div>
                   ) : (
                     <div
-                      className={`px-4 py-2.5 rounded-2xl text-sm ${
+                      className={`px-4 py-2.5 rounded-2xl text-sm font-bold border-[2px] border-[#2C2C2C] ${
                         isMine
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-800 text-gray-200'
+                          ? 'bg-[#E4000F] text-white shadow-[2px_2px_0_#B8000C]'
+                          : 'bg-white text-[#1A1A1A] shadow-[2px_2px_0_#2C2C2C]'
                       }`}
                     >
                       {comment.content}
                     </div>
                   )}
-                  <p className={`text-xs text-gray-500 mt-1 ${isMine ? 'text-right' : ''}`}>
+                  <p className={`text-xs font-medium text-gray-400 mt-1 ${isMine ? 'text-right' : ''}`}>
                     {new Date(comment.created_at).toLocaleString('ja-JP', {
                       month: 'short',
                       day: 'numeric',
@@ -234,15 +243,15 @@ export default function CommentsPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Stamp picker */}
+      {/* スタンプピッカー */}
       {showStamps && (
-        <div className="grid grid-cols-6 gap-2 p-3 bg-gray-800/50 rounded-xl border border-gray-700/50 mb-3">
+        <div className="grid grid-cols-6 gap-2 p-3 bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] mb-3">
           {STAMPS.map((stamp) => (
             <button
               key={stamp}
               onClick={() => handleSendStamp(stamp)}
               disabled={submitting}
-              className="text-2xl p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              className="text-2xl p-2 hover:bg-[#FAFAFA] hover:scale-110 rounded-xl transition-all disabled:opacity-50 border-[2px] border-transparent hover:border-gray-200"
             >
               {stamp}
             </button>
@@ -250,13 +259,15 @@ export default function CommentsPage() {
         </div>
       )}
 
-      {/* Input area */}
+      {/* 入力エリア */}
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setShowStamps(!showStamps)}
-          className={`p-2.5 rounded-xl transition-colors ${
-            showStamps ? 'bg-indigo-600/20 text-indigo-400' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+          className={`p-3 rounded-xl border-[3px] transition-all font-extrabold text-lg ${
+            showStamps
+              ? 'bg-[#FFD700] border-[#2C2C2C] shadow-[0_2px_0_#2C2C2C]'
+              : 'bg-white border-[#2C2C2C] shadow-[0_3px_0_#2C2C2C] hover:shadow-[0_5px_0_#2C2C2C] hover:-translate-y-0.5'
           }`}
           title="スタンプ"
         >
@@ -267,12 +278,12 @@ export default function CommentsPage() {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="メッセージを入力..."
-          className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
+          className="flex-1 px-4 py-3 bg-white border-[3px] border-[#2C2C2C] rounded-xl text-sm font-bold text-[#1A1A1A] placeholder:text-gray-400 placeholder:font-medium focus:outline-none focus:border-[#009AC7] transition-colors shadow-[0_3px_0_#2C2C2C]"
         />
         <button
           type="submit"
           disabled={submitting || !message.trim()}
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors"
+          className="px-5 py-3 bg-[#E4000F] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           送信
         </button>

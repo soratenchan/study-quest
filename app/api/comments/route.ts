@@ -5,11 +5,34 @@ import { checkBadges } from '@/lib/utils/badge';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const to_user_id = request.nextUrl.searchParams.get('to_user_id');
+    const room_id = request.nextUrl.searchParams.get('room_id');
+
+    if (room_id) {
+      // ルーム内の全コメントを取得 (双方向)
+      const { data: users } = await supabase
+        .from('users')
+        .select('id')
+        .eq('room_id', room_id);
+
+      const userIds = users?.map((u: { id: string }) => u.id) || [];
+
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*, from_user:users!from_user_id(*)')
+        .in('from_user_id', userIds)
+        .in('to_user_id', userIds)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json(data);
+    }
 
     if (!to_user_id) {
-      return NextResponse.json({ error: 'to_user_id is required' }, { status: 400 });
+      return NextResponse.json({ error: 'to_user_id or room_id is required' }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -23,14 +46,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
     const { from_user_id, to_user_id, content, stamp } = body;
 
@@ -53,23 +76,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Add 3 XP to sender
-    const { data: sender, error: senderError } = await supabase
+    // 送信者に +3 XP
+    const { data: sender } = await supabase
       .from('users')
       .select('*')
       .eq('id', from_user_id)
       .single();
 
-    if (sender && !senderError) {
+    if (sender) {
       const newXp = sender.xp + XP_TABLE.buddy_comment;
       const newLevel = calcLevel(newXp);
+      await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', from_user_id);
 
-      await supabase
-        .from('users')
-        .update({ xp: newXp, level: newLevel })
-        .eq('id', from_user_id);
-
-      // Check good_buddy badge
       const { count: commentsSent } = await supabase
         .from('comments')
         .select('*', { count: 'exact', head: true })
@@ -103,14 +121,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
     const { id } = body;
 
@@ -130,7 +148,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

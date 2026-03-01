@@ -5,7 +5,7 @@ import { checkBadges } from '@/lib/utils/badge';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
     const { userId, amount, reason } = body;
 
@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId, amount, and reason are required' }, { status: 400 });
     }
 
-    // Get current user
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Update XP and level
     const newXp = user.xp + amount;
     const newLevel = calcLevel(newXp);
 
@@ -39,7 +37,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    // Check and award badges
     const { count: totalCompleted } = await supabase
       .from('tasks')
       .select('*', { count: 'exact', head: true })
@@ -66,20 +63,11 @@ export async function POST(request: NextRequest) {
       for (const goal of userGoals) {
         const tasks = goal.tasks || [];
         if (tasks.length === 0) continue;
-
         const monthlyTasks = tasks.filter((t: { type: string }) => t.type === 'monthly');
-        if (monthlyTasks.length > 0 && monthlyTasks.every((t: { is_completed: boolean }) => t.is_completed)) {
-          monthlyGoalAchieved = true;
-        }
-
+        if (monthlyTasks.length > 0 && monthlyTasks.every((t: { is_completed: boolean }) => t.is_completed)) monthlyGoalAchieved = true;
         const weeklyTasks = tasks.filter((t: { type: string }) => t.type === 'weekly');
-        if (weeklyTasks.length > 0 && weeklyTasks.every((t: { is_completed: boolean }) => t.is_completed)) {
-          weeklyAllDone = true;
-        }
-
-        if (tasks.length > 0 && tasks.every((t: { is_completed: boolean }) => t.is_completed)) {
-          yearlyGoalCompleted = true;
-        }
+        if (weeklyTasks.length > 0 && weeklyTasks.every((t: { is_completed: boolean }) => t.is_completed)) weeklyAllDone = true;
+        if (tasks.length > 0 && tasks.every((t: { is_completed: boolean }) => t.is_completed)) yearlyGoalCompleted = true;
       }
     }
 
@@ -102,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(updatedUser);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,55 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 export default function LandingPage() {
   const router = useRouter();
-  const [creating, setCreating] = useState(false);
-  const [joinId, setJoinId] = useState('');
-  const [error, setError] = useState('');
 
-  async function handleCreateRoom() {
-    setCreating(true);
-    setError('');
-    try {
-      const res = await fetch('/api/rooms', { method: 'POST' });
-      if (!res.ok) throw new Error('ルームの作成に失敗しました');
-      const room = await res.json();
-      router.push(`/room/${room.id}/setup`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'エラーが発生しました');
-      setCreating(false);
-    }
-  }
-
-  function handleJoinRoom() {
-    if (!joinId.trim()) return;
-    // Support both full URLs and plain IDs
-    let roomId = joinId.trim();
-    if (roomId.includes('/room/')) {
-      const match = roomId.match(/\/room\/([^/]+)/);
-      if (match) roomId = match[1];
-    }
-    router.push(`/room/${roomId}/setup`);
-  }
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace('/home');
+    });
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gradient-to-br from-indigo-950 via-purple-950 to-gray-950">
-      <div className="text-center max-w-xl mx-auto">
-        {/* Logo */}
-        <div className="mb-8">
-          <span className="text-6xl">⚔️</span>
-          <h1 className="mt-4 text-5xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-[#E4000F] via-[#B8000C] to-[#1A1A2E] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      {/* 背景装飾 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 text-8xl opacity-10 select-none">⭐</div>
+        <div className="absolute top-1/4 right-8 text-7xl opacity-10 select-none">🎮</div>
+        <div className="absolute bottom-20 left-1/4 text-9xl opacity-10 select-none">⚔️</div>
+        <div className="absolute bottom-10 right-10 text-7xl opacity-10 select-none">🏆</div>
+        <div className="absolute top-1/2 left-8 text-6xl opacity-10 select-none">🌟</div>
+      </div>
+
+      <div className="relative text-center max-w-2xl mx-auto">
+        {/* ロゴ */}
+        <div className="mb-10">
+          <span className="text-7xl">⚔️</span>
+          <h1 className="mt-4 text-6xl font-extrabold text-white tracking-tight drop-shadow-lg">
             StudyQuest
           </h1>
-          <p className="mt-3 text-xl text-gray-300">
-            バディと一緒に目標を攻略しよう
+          <p className="mt-4 text-xl text-white/90 font-bold">
+            バディと一緒に目標を攻略しよう！
           </p>
         </div>
 
-        {/* Feature bullets */}
-        <div className="flex flex-wrap justify-center gap-4 mb-10">
+        {/* 機能ハイライト */}
+        <div className="flex flex-wrap justify-center gap-4 mb-12">
           {[
             { emoji: '🎯', text: '目標管理' },
             { emoji: '✨', text: 'XP・レベル' },
@@ -57,57 +47,28 @@ export default function LandingPage() {
           ].map((f) => (
             <div
               key={f.text}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-gray-300"
+              className="flex items-center gap-2 px-5 py-3 bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] font-bold text-gray-800"
             >
-              <span>{f.emoji}</span>
+              <span className="text-xl">{f.emoji}</span>
               <span>{f.text}</span>
             </div>
           ))}
         </div>
 
-        {/* Create room */}
-        <button
-          onClick={handleCreateRoom}
-          disabled={creating}
-          className="w-full max-w-xs mx-auto block px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-lg"
-        >
-          {creating ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              作成中...
-            </span>
-          ) : (
-            'ルームを作る'
-          )}
-        </button>
-
-        {error && (
-          <p className="mt-3 text-red-400 text-sm">{error}</p>
-        )}
-
-        {/* Join room */}
-        <div className="mt-10 pt-8 border-t border-white/10">
-          <p className="text-gray-400 text-sm mb-3">ルームに参加する</p>
-          <div className="flex gap-2 max-w-sm mx-auto">
-            <input
-              type="text"
-              value={joinId}
-              onChange={(e) => setJoinId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
-              placeholder="ルームIDまたはURLを入力"
-              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
-            />
-            <button
-              onClick={handleJoinRoom}
-              disabled={!joinId.trim()}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors text-sm"
-            >
-              参加
-            </button>
-          </div>
+        {/* ボタン */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-sm mx-auto">
+          <Link
+            href="/register"
+            className="w-full px-6 py-3 bg-[#E4000F] text-white font-extrabold text-base rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all text-center"
+          >
+            はじめる
+          </Link>
+          <Link
+            href="/login"
+            className="w-full px-6 py-3 bg-white text-[#2C2C2C] font-extrabold text-base rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all text-center"
+          >
+            ログイン
+          </Link>
         </div>
       </div>
     </div>

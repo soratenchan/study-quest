@@ -3,11 +3,33 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const user_id = request.nextUrl.searchParams.get('user_id');
+    const room_id = request.nextUrl.searchParams.get('room_id');
+
+    if (room_id) {
+      // ルーム内の全ユーザーの目標を取得
+      const { data: users } = await supabase
+        .from('users')
+        .select('id')
+        .eq('room_id', room_id);
+
+      const userIds = users?.map((u: { id: string }) => u.id) || [];
+
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*, tasks(*)')
+        .in('user_id', userIds)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json(data);
+    }
 
     if (!user_id) {
-      return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
+      return NextResponse.json({ error: 'user_id or room_id is required' }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -21,16 +43,16 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
-    const { user_id, title, description, year } = body;
+    const { user_id, title, description, year, is_public } = body;
 
     if (!user_id || !title || !year) {
       return NextResponse.json({ error: 'user_id, title, and year are required' }, { status: 400 });
@@ -38,7 +60,13 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('goals')
-      .insert({ user_id, title, description: description || null, year })
+      .insert({
+        user_id,
+        title,
+        description: description || null,
+        year,
+        is_public: is_public !== undefined ? is_public : true,
+      })
       .select()
       .single();
 
@@ -47,16 +75,16 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
-    const { id, title, description } = body;
+    const { id, title, description, is_public } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -65,6 +93,7 @@ export async function PATCH(request: NextRequest) {
     const updates: Record<string, unknown> = {};
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
+    if (is_public !== undefined) updates.is_public = is_public;
 
     const { data, error } = await supabase
       .from('goals')
@@ -78,14 +107,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const id = request.nextUrl.searchParams.get('id');
 
     if (!id) {
@@ -102,7 +131,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

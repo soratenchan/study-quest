@@ -1,39 +1,19 @@
-'use client';
-
-import { InputHTMLAttributes, forwardRef } from 'react';
-
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
-
-    return (
-      <div className="w-full">
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-gray-50 disabled:text-gray-500 ${
-            error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300'
-          } ${className}`}
-          {...props}
-        />
-        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-      </div>
-    );
-  }
-);
-
-Input.displayName = 'Input';
-export default Input;
+export default function Input({ label, error, className = '', ...props }: InputProps) {
+  return (
+    <div className="w-full">
+      {label && (
+        <label className="block text-sm font-bold text-[#1A1A1A] mb-1.5">{label}</label>
+      )}
+      <input
+        className={`w-full px-4 py-3 bg-white border-[3px] ${error ? 'border-[#E4000F]' : 'border-[#2C2C2C]'} rounded-xl text-[#1A1A1A] font-medium text-sm focus:outline-none focus:border-[#009AC7] transition-colors ${className}`}
+        {...props}
+      />
+      {error && <p className="mt-1 text-xs font-bold text-[#E4000F]">{error}</p>}
+    </div>
+  );
+}

@@ -5,7 +5,7 @@ import { checkBadges } from '@/lib/utils/badge';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const goal_id = request.nextUrl.searchParams.get('goal_id');
 
     if (!goal_id) {
@@ -23,14 +23,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
     const { goal_id, title, type, due_date } = body;
 
@@ -49,14 +49,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
     const { id, ...updates } = body;
 
@@ -64,11 +64,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    // If marking as completed, handle XP and streak logic
+    // タスク完了時: XP・ストリーク・バッジ処理
     if (updates.is_completed === true) {
       updates.completed_at = new Date().toISOString();
 
-      // Get the task to find its goal and type
       const { data: task, error: taskError } = await supabase
         .from('tasks')
         .select('*, goal:goals(user_id)')
@@ -82,7 +81,6 @@ export async function PATCH(request: NextRequest) {
       const userId = task.goal.user_id;
       const xpAmount = getXpForTask(task.type);
 
-      // Get current user
       const { data: user, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -93,7 +91,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
 
-      // Calculate streak
+      // ストリーク計算
       const today = new Date().toISOString().split('T')[0];
       const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
       let newStreak = user.streak_count;
@@ -104,25 +102,15 @@ export async function PATCH(request: NextRequest) {
         newStreak = 1;
       }
 
-      // Update XP, level, streak
       const newXp = user.xp + xpAmount;
       const newLevel = calcLevel(newXp);
 
-      const { error: updateUserError } = await supabase
+      await supabase
         .from('users')
-        .update({
-          xp: newXp,
-          level: newLevel,
-          streak_count: newStreak,
-          last_task_date: today,
-        })
+        .update({ xp: newXp, level: newLevel, streak_count: newStreak, last_task_date: today })
         .eq('id', userId);
 
-      if (updateUserError) {
-        return NextResponse.json({ error: updateUserError.message }, { status: 500 });
-      }
-
-      // Check and award badges
+      // バッジチェック
       const { count: totalCompleted } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
@@ -136,7 +124,6 @@ export async function PATCH(request: NextRequest) {
         .select('*', { count: 'exact', head: true })
         .eq('from_user_id', userId);
 
-      // Check monthly goal: all monthly tasks for a goal completed
       const { data: userGoals } = await supabase
         .from('goals')
         .select('id, tasks(*)')
@@ -176,7 +163,6 @@ export async function PATCH(request: NextRequest) {
         weeklyAllDone,
       });
 
-      // Insert new badges, ignoring duplicates
       for (const badgeType of earnedBadges) {
         await supabase
           .from('badges')
@@ -187,7 +173,6 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Update the task itself
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -200,14 +185,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const id = request.nextUrl.searchParams.get('id');
 
     if (!id) {
@@ -224,7 +209,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
