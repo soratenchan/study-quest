@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { User } from '@/types';
 
 export default function HomePage() {
   const router = useRouter();
   const [authUser, setAuthUser] = useState<SupabaseUser | null>(null);
+  const [myUser, setMyUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [joinInput, setJoinInput] = useState('');
@@ -15,12 +17,21 @@ export default function HomePage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
         router.replace('/login');
         return;
       }
       setAuthUser(user);
+
+      // 自分が参加中のルームを取得
+      const res = await fetch(`/api/users?auth_id=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const existing = Array.isArray(data) && data.length > 0 ? data[0] : null;
+        setMyUser(existing);
+      }
+
       setLoading(false);
     });
   }, [router]);
@@ -118,6 +129,37 @@ export default function HomePage() {
         {error && (
           <div className="mb-4 p-3 bg-[#E4000F]/20 border-[2px] border-[#E4000F] rounded-xl">
             <p className="text-[#E4000F] text-sm font-bold">{error}</p>
+          </div>
+        )}
+
+        {/* 参加中のルーム */}
+        {myUser && (
+          <div className="mb-6">
+            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-2 px-1">参加中のルーム</p>
+            <div className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] p-5">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-3xl shadow-[2px_2px_0_#2C2C2C] flex-shrink-0">
+                  {myUser.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-gray-800 text-base truncate">{myUser.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="px-2 py-0.5 bg-[#FFD700] text-[#1A1A1A] text-xs font-extrabold rounded-lg border-[2px] border-[#2C2C2C]">
+                      🏆 Lv.{myUser.level}
+                    </span>
+                    <span className="text-xs text-gray-400 font-mono">
+                      {myUser.room_id.slice(0, 8)}...
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push(`/room/${myUser.room_id}`)}
+                  className="flex-shrink-0 px-5 py-2.5 bg-[#E4000F] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all"
+                >
+                  入る →
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
