@@ -46,6 +46,12 @@ const NAV_ITEMS = [
     icon: "💬",
     exact: false,
   },
+  {
+    href: (id: string) => `/room/${id}/timer`,
+    label: "タイマー",
+    icon: "⏱️",
+    exact: false,
+  },
 ];
 
 export default function Navbar({ roomId, userId }: NavbarProps) {

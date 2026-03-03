@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import type { Goal, Task, TaskType } from '@/types';
 import { getXpForTask } from '@/lib/utils/xp';
 
@@ -105,26 +106,28 @@ export default function GoalDetailPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem(`userId_${roomId}`);
-    if (!storedUserId) {
-      router.replace(`/room/${roomId}/setup`);
-      return;
-    }
-    setUserId(storedUserId);
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      if (!authUser) { router.replace('/login'); return; }
+      const res = await fetch(`/api/users?room_id=${roomId}`);
+      if (!res.ok) { router.replace(`/room/${roomId}`); return; }
+      const users = await res.json();
+      const me = (users as { auth_id: string; id: string }[]).find(u => u.auth_id === authUser.id);
+      if (!me) { router.replace(`/room/${roomId}`); return; }
+      setUserId(me.id);
+    });
   }, [roomId, router]);
 
   const fetchGoalAndTasks = useCallback(async () => {
     try {
-      const [goalsRes, tasksRes] = await Promise.all([
-        fetch(`/api/goals?user_id=${userId}`),
+      const [goalRes, tasksRes] = await Promise.all([
+        fetch(`/api/goals?id=${goalId}`),
         fetch(`/api/tasks?goal_id=${goalId}`),
       ]);
 
-      if (goalsRes.ok) {
-        const goalsData = await goalsRes.json();
-        const allGoals = Array.isArray(goalsData) ? goalsData : [];
-        const found = allGoals.find((g: Goal) => g.id === goalId);
-        setGoal(found || null);
+      if (goalRes.ok) {
+        const data = await goalRes.json();
+        setGoal(data ?? null);
       }
       if (tasksRes.ok) {
         const data = await tasksRes.json();
@@ -135,12 +138,12 @@ export default function GoalDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, goalId]);
+  }, [goalId]);
 
   useEffect(() => {
     if (!userId) return;
     fetchGoalAndTasks();
-  }, [userId, goalId, fetchGoalAndTasks]);
+  }, [userId, fetchGoalAndTasks]);
 
   async function handleToggleTask(taskId: string, isCompleted: boolean, e: React.MouseEvent) {
     // XPポップアップ (完了にするとき)

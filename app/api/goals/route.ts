@@ -7,6 +7,17 @@ export async function GET(request: NextRequest) {
     const user_id = request.nextUrl.searchParams.get('user_id');
     const room_id = request.nextUrl.searchParams.get('room_id');
 
+    const id = request.nextUrl.searchParams.get('id');
+    if (id) {
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*, tasks(*)')
+        .eq('id', id)
+        .single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+      return NextResponse.json(data);
+    }
+
     if (room_id) {
       // ルーム内の全ユーザーの目標を取得
       const { data: users } = await supabase
