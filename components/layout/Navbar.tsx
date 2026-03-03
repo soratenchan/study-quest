@@ -91,8 +91,8 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
               <Image
                 src="/study-quest-logo.png"
                 alt="StudyQuest"
-                width={28}
-                height={28}
+                width={80}
+                height={80}
                 className="rounded-lg"
               />
               <span className="font-extrabold text-white text-lg tracking-wide">
