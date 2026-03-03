@@ -35,11 +35,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'to_user_id or room_id is required' }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const unreadOnly = request.nextUrl.searchParams.get('unread') === 'true';
+    let query = supabase
       .from('comments')
       .select('*, from_user:users!from_user_id(*)')
-      .eq('to_user_id', to_user_id)
-      .order('created_at', { ascending: false });
+      .eq('to_user_id', to_user_id);
+    if (unreadOnly) {
+      query = query.eq('is_read', false);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

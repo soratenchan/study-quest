@@ -54,36 +54,21 @@ export default function CommentsPage() {
           setBuddyId(buddy?.id || null);
         }
 
-        const [sentRes, receivedRes] = await Promise.all([
-          fetch(`/api/comments?from_user_id=${userId}`),
-          fetch(`/api/comments?to_user_id=${userId}`),
-        ]);
+        // room_id で双方向まとめて取得
+        const commentsRes = await fetch(`/api/comments?room_id=${roomId}`);
+        if (commentsRes.ok) {
+          const data = await commentsRes.json();
+          const allComments: Comment[] = Array.isArray(data) ? data : [];
+          setComments(
+            allComments.sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            )
+          );
 
-        const allComments: Comment[] = [];
-        if (sentRes.ok) {
-          const data = await sentRes.json();
-          if (Array.isArray(data)) allComments.push(...data);
-        }
-        if (receivedRes.ok) {
-          const data = await receivedRes.json();
-          if (Array.isArray(data)) allComments.push(...data);
-        }
-
-        const uniqueMap = new Map<string, Comment>();
-        for (const c of allComments) {
-          uniqueMap.set(c.id, c);
-        }
-        setComments(
-          Array.from(uniqueMap.values()).sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          )
-        );
-
-        // 既読処理
-        const unreadIds = allComments
-          .filter((c) => c.to_user_id === userId && !c.is_read)
-          .map((c) => c.id);
-        if (unreadIds.length > 0) {
+          // 既読処理（自分宛の未読のみ）
+          const unreadIds = allComments
+            .filter((c) => c.to_user_id === userId && !c.is_read)
+            .map((c) => c.id);
           for (const cId of unreadIds) {
             fetch('/api/comments', {
               method: 'PATCH',

@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -15,7 +16,7 @@ export default function ForgotPasswordPage() {
     if (!email.trim()) return;
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const supabase = createClient();
@@ -24,7 +25,7 @@ export default function ForgotPasswordPage() {
         email.trim(),
         {
           redirectTo: `${origin}/auth/callback?type=recovery`,
-        }
+        },
       );
 
       if (authError) {
@@ -33,7 +34,7 @@ export default function ForgotPasswordPage() {
 
       setSent(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'メールの送信に失敗しました');
+      setError(e instanceof Error ? e.message : "メールの送信に失敗しました");
       setLoading(false);
     }
   }
@@ -42,10 +43,18 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center px-4 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">⭐</div>
-          <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">🎮</div>
-          <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">⚔️</div>
-          <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">🏆</div>
+          <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">
+            ⭐
+          </div>
+          <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">
+            🎮
+          </div>
+          <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">
+            ⚔️
+          </div>
+          <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">
+            🏆
+          </div>
         </div>
 
         <div className="relative w-full max-w-md">
@@ -55,7 +64,8 @@ export default function ForgotPasswordPage() {
               リセットメールを送信しました
             </h2>
             <p className="text-gray-600 text-sm mb-2">
-              <span className="font-bold text-gray-800">{email}</span> にパスワードリセット用のメールを送りました。
+              <span className="font-bold text-gray-800">{email}</span>{" "}
+              にパスワードリセット用のメールを送りました。
             </p>
             <p className="text-gray-600 text-sm mb-6">
               メール内のリンクをクリックして新しいパスワードを設定してください。
@@ -76,18 +86,34 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center px-4 relative overflow-hidden">
       {/* 背景装飾 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">⭐</div>
-        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">🎮</div>
-        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">⚔️</div>
-        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">🏆</div>
+        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">
+          ⭐
+        </div>
+        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">
+          🎮
+        </div>
+        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">
+          ⚔️
+        </div>
+        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">
+          🏆
+        </div>
       </div>
 
       <div className="relative w-full max-w-md">
         {/* ロゴ */}
         <div className="text-center mb-6">
           <Link href="/" className="inline-block">
-            <span className="text-5xl">⚔️</span>
-            <p className="mt-2 text-2xl font-extrabold text-white">StudyQuest</p>
+            <Image
+              src="/study-quest-logo.png"
+              alt="StudyQuest"
+              width={250}
+              height={250}
+              className="rounded-xl mx-auto"
+            />
+            <p className="mt-2 text-2xl font-extrabold text-white">
+              StudyQuest
+            </p>
           </Link>
         </div>
 
@@ -102,7 +128,10 @@ export default function ForgotPasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-bold text-gray-700 mb-1"
+              >
                 メールアドレス
               </label>
               <input
@@ -128,19 +157,34 @@ export default function ForgotPasswordPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   送信中...
                 </span>
               ) : (
-                'リセットメールを送信'
+                "リセットメールを送信"
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <Link href="/login" className="text-gray-500 hover:text-[#E4000F] hover:underline transition-colors">
+            <Link
+              href="/login"
+              className="text-gray-500 hover:text-[#E4000F] hover:underline transition-colors"
+            >
               ← ログインに戻る
             </Link>
           </div>

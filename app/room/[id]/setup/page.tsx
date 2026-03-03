@@ -1,21 +1,35 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import type { User } from '@/types';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import type { User } from "@/types";
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨', '🦁', '🐯', '🐸', '🦋', '🦄', '🌟', '💫', '🎯'];
+const AVATARS = [
+  "🦊",
+  "🐻",
+  "🐼",
+  "🐨",
+  "🦁",
+  "🐯",
+  "🐸",
+  "🦋",
+  "🦄",
+  "🌟",
+  "💫",
+  "🎯",
+];
 
 export default function SetupPage() {
   const params = useParams();
   const router = useRouter();
   const roomId = params.id as string;
 
-  const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState('🦊');
+  const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState("🦊");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,9 +39,11 @@ export default function SetupPage() {
         const supabase = createClient();
 
         // 認証チェック
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
         if (!authUser) {
-          router.replace('/login');
+          router.replace("/login");
           return;
         }
 
@@ -35,9 +51,10 @@ export default function SetupPage() {
         const existingRes = await fetch(`/api/users?auth_id=${authUser.id}`);
         if (existingRes.ok) {
           const existingUsers = await existingRes.json();
-          const existingUser = Array.isArray(existingUsers) && existingUsers.length > 0
-            ? existingUsers[0]
-            : null;
+          const existingUser =
+            Array.isArray(existingUsers) && existingUsers.length > 0
+              ? existingUsers[0]
+              : null;
           if (existingUser) {
             // 既存のルームにリダイレクト（別ルームの招待でもそのまま既存ルームへ）
             router.replace(`/room/${existingUser.room_id}`);
@@ -66,23 +83,23 @@ export default function SetupPage() {
     if (!name.trim()) return;
 
     setSubmitting(true);
-    setError('');
+    setError("");
 
     try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ room_id: roomId, name: name.trim(), avatar }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'プロフィールの作成に失敗しました');
+        throw new Error(data.error || "プロフィールの作成に失敗しました");
       }
 
       router.push(`/room/${roomId}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'エラーが発生しました');
+      setError(e instanceof Error ? e.message : "エラーが発生しました");
       setSubmitting(false);
     }
   }
@@ -99,16 +116,30 @@ export default function SetupPage() {
     <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center px-4 py-8 relative overflow-hidden">
       {/* 背景装飾 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">⭐</div>
-        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">🎮</div>
-        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">⚔️</div>
-        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">🏆</div>
+        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">
+          ⭐
+        </div>
+        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">
+          🎮
+        </div>
+        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">
+          ⚔️
+        </div>
+        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">
+          🏆
+        </div>
       </div>
 
       <div className="relative w-full max-w-md">
         {/* ロゴ */}
         <div className="text-center mb-6">
-          <span className="text-5xl">⚔️</span>
+          <Image
+            src="/study-quest-logo.png"
+            alt="StudyQuest"
+            width={250}
+            height={250}
+            className="rounded-xl mx-auto"
+          />
           <p className="mt-2 text-2xl font-extrabold text-white">StudyQuest</p>
         </div>
 
@@ -126,7 +157,10 @@ export default function SetupPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 名前入力 */}
             <div>
-              <label htmlFor="name" className="block text-sm font-bold text-gray-700 mb-1">
+              <label
+                htmlFor="name"
+                className="block text-sm font-bold text-gray-700 mb-1"
+              >
                 名前
               </label>
               <input
@@ -155,8 +189,8 @@ export default function SetupPage() {
                     onClick={() => setAvatar(a)}
                     className={`text-3xl p-2 rounded-xl transition-all border-[2px] ${
                       avatar === a
-                        ? 'bg-[#E4000F]/10 border-[#E4000F] scale-110'
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        ? "bg-[#E4000F]/10 border-[#E4000F] scale-110"
+                        : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                     }`}
                   >
                     {a}
@@ -177,13 +211,25 @@ export default function SetupPage() {
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   設定中...
                 </span>
               ) : (
-                '冒険を始める'
+                "冒険を始める"
               )}
             </button>
           </form>
@@ -191,12 +237,19 @@ export default function SetupPage() {
           {/* 既存メンバー表示 */}
           {members.length > 0 && (
             <div className="mt-6 p-4 bg-gray-50 rounded-xl border-[2px] border-gray-200">
-              <p className="text-sm font-bold text-gray-600 mb-3">このルームのメンバー</p>
+              <p className="text-sm font-bold text-gray-600 mb-3">
+                このルームのメンバー
+              </p>
               <div className="flex flex-wrap gap-2">
                 {members.map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border-[2px] border-gray-200">
+                  <div
+                    key={m.id}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border-[2px] border-gray-200"
+                  >
                     <span>{m.avatar}</span>
-                    <span className="text-sm font-medium text-gray-700">{m.name}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {m.name}
+                    </span>
                   </div>
                 ))}
               </div>

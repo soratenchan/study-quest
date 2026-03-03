@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function LandingPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace('/home');
+      if (user) router.replace("/home");
     });
   }, [router]);
 
@@ -19,21 +20,34 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#E4000F] via-[#B8000C] to-[#1A1A2E] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* 背景装飾 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-8xl opacity-10 select-none">⭐</div>
-        <div className="absolute top-1/4 right-8 text-7xl opacity-10 select-none">🎮</div>
-        <div className="absolute bottom-20 left-1/4 text-9xl opacity-10 select-none">⚔️</div>
-        <div className="absolute bottom-10 right-10 text-7xl opacity-10 select-none">🏆</div>
-        <div className="absolute top-1/2 left-8 text-6xl opacity-10 select-none">🌟</div>
+        <div className="absolute top-10 left-10 text-8xl opacity-10 select-none">
+          ⭐
+        </div>
+        <div className="absolute top-1/4 right-8 text-7xl opacity-10 select-none">
+          🎮
+        </div>
+        <div className="absolute bottom-20 left-1/4 text-9xl opacity-10 select-none">
+          ⚔️
+        </div>
+        <div className="absolute bottom-10 right-10 text-7xl opacity-10 select-none">
+          🏆
+        </div>
+        <div className="absolute top-1/2 left-8 text-6xl opacity-10 select-none">
+          🌟
+        </div>
       </div>
 
       <div className="relative text-center max-w-2xl mx-auto">
         {/* ロゴ */}
         <div className="mb-10">
-          <span className="text-7xl">⚔️</span>
-          <h1 className="mt-4 text-6xl font-extrabold text-white tracking-tight drop-shadow-lg">
-            StudyQuest
-          </h1>
-          <p className="mt-4 text-xl text-white/90 font-bold">
+          <Image
+            src="/study-quest-logo.png"
+            alt="StudyQuest"
+            width={500}
+            height={500}
+            className="rounded-2xl mx-auto"
+          />
+          <p className="text-xl text-white/90 font-bold">
             バディと一緒に目標を攻略しよう！
           </p>
         </div>
@@ -41,9 +55,9 @@ export default function LandingPage() {
         {/* 機能ハイライト */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
           {[
-            { emoji: '🎯', text: '目標管理' },
-            { emoji: '✨', text: 'XP・レベル' },
-            { emoji: '🤝', text: 'バディと共有' },
+            { emoji: "🎯", text: "目標管理" },
+            { emoji: "✨", text: "XP・レベル" },
+            { emoji: "🤝", text: "バディと共有" },
           ].map((f) => (
             <div
               key={f.text}

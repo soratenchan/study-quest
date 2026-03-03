@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const supabase = createClient();
@@ -30,9 +31,9 @@ export default function LoginPage() {
         throw authError;
       }
 
-      router.replace('/home');
+      router.replace("/home");
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'ログインに失敗しました');
+      setError(e instanceof Error ? e.message : "ログインに失敗しました");
       setLoading(false);
     }
   }
@@ -41,18 +42,34 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center px-4 relative overflow-hidden">
       {/* 背景装飾 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">⭐</div>
-        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">🎮</div>
-        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">⚔️</div>
-        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">🏆</div>
+        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">
+          ⭐
+        </div>
+        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">
+          🎮
+        </div>
+        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">
+          ⚔️
+        </div>
+        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">
+          🏆
+        </div>
       </div>
 
       <div className="relative w-full max-w-md">
         {/* ロゴ */}
         <div className="text-center mb-6">
           <Link href="/" className="inline-block">
-            <span className="text-5xl">⚔️</span>
-            <p className="mt-2 text-2xl font-extrabold text-white">StudyQuest</p>
+            <Image
+              src="/study-quest-logo.png"
+              alt="StudyQuest"
+              width={250}
+              height={250}
+              className="rounded-xl mx-auto"
+            />
+            <p className="mt-2 text-2xl font-extrabold text-white">
+              StudyQuest
+            </p>
           </Link>
         </div>
 
@@ -64,7 +81,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-bold text-gray-700 mb-1"
+              >
                 メールアドレス
               </label>
               <input
@@ -79,7 +99,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-bold text-gray-700 mb-1"
+              >
                 パスワード
               </label>
               <input
@@ -105,26 +128,44 @@ export default function LoginPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   ログイン中...
                 </span>
               ) : (
-                'ログイン'
+                "ログイン"
               )}
             </button>
           </form>
 
           <div className="mt-6 space-y-3 text-center text-sm">
             <p className="text-gray-600">
-              アカウントをお持ちでない方は{' '}
-              <Link href="/register" className="text-[#E4000F] font-bold hover:underline">
+              アカウントをお持ちでない方は{" "}
+              <Link
+                href="/register"
+                className="text-[#E4000F] font-bold hover:underline"
+              >
                 アカウントを作成
               </Link>
             </p>
             <p>
-              <Link href="/forgot-password" className="text-gray-500 hover:text-[#E4000F] hover:underline transition-colors">
+              <Link
+                href="/forgot-password"
+                className="text-gray-500 hover:text-[#E4000F] hover:underline transition-colors"
+              >
                 パスワードを忘れた方
               </Link>
             </p>

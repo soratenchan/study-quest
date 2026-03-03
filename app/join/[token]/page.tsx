@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import type { Room } from '@/types';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import type { Room } from "@/types";
 
 export default function JoinPage() {
   const params = useParams();
@@ -12,13 +13,15 @@ export default function JoinPage() {
 
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchRoom() {
       try {
         // まずトークンとして検索
-        const res = await fetch(`/api/rooms?token=${encodeURIComponent(token)}`);
+        const res = await fetch(
+          `/api/rooms?token=${encodeURIComponent(token)}`,
+        );
         if (res.ok) {
           const data = await res.json();
           setRoom(data);
@@ -35,9 +38,11 @@ export default function JoinPage() {
           return;
         }
 
-        setError('ルームが見つかりませんでした。招待リンクを確認してください。');
+        setError(
+          "ルームが見つかりませんでした。招待リンクを確認してください。",
+        );
       } catch {
-        setError('ルームの取得に失敗しました');
+        setError("ルームの取得に失敗しました");
       } finally {
         setLoading(false);
       }
@@ -56,7 +61,9 @@ export default function JoinPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center">
-        <div className="text-white font-bold animate-pulse">ルームを確認中...</div>
+        <div className="text-white font-bold animate-pulse">
+          ルームを確認中...
+        </div>
       </div>
     );
   }
@@ -65,18 +72,34 @@ export default function JoinPage() {
     <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center px-4 relative overflow-hidden">
       {/* 背景装飾 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">⭐</div>
-        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">🎮</div>
-        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">⚔️</div>
-        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">🏆</div>
+        <div className="absolute top-10 left-10 text-6xl opacity-10 select-none">
+          ⭐
+        </div>
+        <div className="absolute top-1/4 right-8 text-5xl opacity-10 select-none">
+          🎮
+        </div>
+        <div className="absolute bottom-20 left-1/4 text-7xl opacity-10 select-none">
+          ⚔️
+        </div>
+        <div className="absolute bottom-10 right-10 text-5xl opacity-10 select-none">
+          🏆
+        </div>
       </div>
 
       <div className="relative w-full max-w-md">
         {/* ロゴ */}
         <div className="text-center mb-6">
           <Link href="/" className="inline-block">
-            <span className="text-5xl">⚔️</span>
-            <p className="mt-2 text-2xl font-extrabold text-white">StudyQuest</p>
+            <Image
+              src="/study-quest-logo.png"
+              alt="StudyQuest"
+              width={250}
+              height={250}
+              className="rounded-xl mx-auto"
+            />
+            <p className="mt-2 text-2xl font-extrabold text-white">
+              StudyQuest
+            </p>
           </Link>
         </div>
 

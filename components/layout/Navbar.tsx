@@ -1,7 +1,8 @@
-'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+"use client";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface NavbarProps {
   roomId: string;
@@ -9,12 +10,42 @@ interface NavbarProps {
 }
 
 const NAV_ITEMS = [
-  { href: (id: string) => `/room/${id}`, label: 'ダッシュ', icon: '📊', exact: true },
-  { href: (id: string) => `/room/${id}/goals`, label: '目標', icon: '🎯', exact: false },
-  { href: (id: string) => `/room/${id}/buddy`, label: 'バディ', icon: '👥', exact: false },
-  { href: (id: string) => `/room/${id}/logs`, label: 'ログ', icon: '📝', exact: false },
-  { href: (id: string) => `/room/${id}/badges`, label: 'バッジ', icon: '🏅', exact: false },
-  { href: (id: string) => `/room/${id}/comments`, label: 'コメント', icon: '💬', exact: false },
+  {
+    href: (id: string) => `/room/${id}`,
+    label: "ダッシュ",
+    icon: "📊",
+    exact: true,
+  },
+  {
+    href: (id: string) => `/room/${id}/goals`,
+    label: "目標",
+    icon: "🎯",
+    exact: false,
+  },
+  {
+    href: (id: string) => `/room/${id}/buddy`,
+    label: "バディ",
+    icon: "👥",
+    exact: false,
+  },
+  {
+    href: (id: string) => `/room/${id}/logs`,
+    label: "ログ",
+    icon: "📝",
+    exact: false,
+  },
+  {
+    href: (id: string) => `/room/${id}/badges`,
+    label: "バッジ",
+    icon: "🏅",
+    exact: false,
+  },
+  {
+    href: (id: string) => `/room/${id}/comments`,
+    label: "コメント",
+    icon: "💬",
+    exact: false,
+  },
 ];
 
 export default function Navbar({ roomId, userId }: NavbarProps) {
@@ -24,17 +55,24 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
 
   useEffect(() => {
     if (!userId) return;
+    // コメントページを開いている間は通知を0にする
+    if (pathname.includes("/comments")) {
+      setUnread(0);
+      return;
+    }
     fetch(`/api/comments?to_user_id=${userId}&unread=true`)
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setUnread(data.length);
       })
       .catch(() => {});
-  }, [userId]);
+  }, [userId, pathname]);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/room/${roomId}/setup`);
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/room/${roomId}/setup`,
+      );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -50,8 +88,16 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
           <div className="flex items-center justify-between h-14">
             {/* ロゴ */}
             <Link href={`/room/${roomId}`} className="flex items-center gap-2">
-              <span className="text-xl">⚔️</span>
-              <span className="font-extrabold text-white text-lg tracking-wide">StudyQuest</span>
+              <Image
+                src="/study-quest-logo.png"
+                alt="StudyQuest"
+                width={28}
+                height={28}
+                className="rounded-lg"
+              />
+              <span className="font-extrabold text-white text-lg tracking-wide">
+                StudyQuest
+              </span>
             </Link>
 
             {/* ナビリンク */}
@@ -67,13 +113,13 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
                     href={href}
                     className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all ${
                       isActive
-                        ? 'bg-[#E4000F] text-white shadow-[0_2px_0_#B8000C]'
-                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                        ? "bg-[#E4000F] text-white shadow-[0_2px_0_#B8000C]"
+                        : "text-gray-300 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     <span>{item.icon}</span>
                     <span>{item.label}</span>
-                    {item.label === 'コメント' && unread > 0 && (
+                    {item.label === "コメント" && unread > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FFD700] text-[10px] font-extrabold text-[#1A1A1A] px-1">
                         {unread}
                       </span>
@@ -89,7 +135,7 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
                 onClick={handleCopy}
                 className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/20 transition-colors"
               >
-                {copied ? '✓ コピー済' : '🔗 招待'}
+                {copied ? "✓ コピー済" : "🔗 招待"}
               </button>
             </div>
           </div>
@@ -109,14 +155,12 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
                 key={href}
                 href={href}
                 className={`relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                  isActive
-                    ? 'text-[#FFD700]'
-                    : 'text-gray-400 hover:text-white'
+                  isActive ? "text-[#FFD700]" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <span className="text-xl">{item.icon}</span>
                 <span className="text-[9px] font-bold">{item.label}</span>
-                {item.label === 'コメント' && unread > 0 && (
+                {item.label === "コメント" && unread > 0 && (
                   <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E4000F] text-[9px] font-extrabold text-white px-1">
                     {unread}
                   </span>
