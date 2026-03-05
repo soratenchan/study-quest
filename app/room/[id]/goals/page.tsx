@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Goal, Task } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { AiGoalModal } from '@/components/AiGoalModal';
 
 function GoalCard({
   goal,
@@ -103,6 +104,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -223,14 +225,23 @@ export default function GoalsPage() {
   return (
     <div className="space-y-6">
       {/* ヘッダー */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-extrabold text-[#1A1A1A]">目標</h1>
-        <button
-          onClick={() => { setSubmitError(null); setShowModal(true); }}
-          className="px-5 py-2.5 bg-[#E4000F] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all"
-        >
-          + 目標を追加
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAiModal(true)}
+            disabled={!userId}
+            className="px-4 py-2.5 bg-[#4F46E5] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all disabled:opacity-40"
+          >
+            ✨ AIで作成
+          </button>
+          <button
+            onClick={() => { setSubmitError(null); setShowModal(true); }}
+            className="px-4 py-2.5 bg-[#E4000F] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] hover:shadow-[0_6px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5 transition-all"
+          >
+            + 目標を追加
+          </button>
+        </div>
       </div>
 
       {/* 年選択 */}
@@ -268,6 +279,17 @@ export default function GoalsPage() {
             />
           ))}
         </div>
+      )}
+
+      {/* AIで目標作成モーダル */}
+      {showAiModal && userId && (
+        <AiGoalModal
+          roomId={roomId}
+          userId={userId}
+          year={year}
+          onClose={() => setShowAiModal(false)}
+          onCreated={fetchGoals}
+        />
       )}
 
       {/* 新規目標モーダル */}
