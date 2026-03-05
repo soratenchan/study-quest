@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { BADGE_DEFINITIONS } from '@/lib/utils/badge';
 import { xpProgress } from '@/lib/utils/xp';
+import { UserAvatar } from '@/components/UserAvatar';
 import type { User, Badge } from '@/types';
+
+// Supabase Storage の "avatars" バケットを Public で作成してください
+// Dashboard > Storage > New bucket > Name: avatars, Public: ON
 
 const AVATARS = [
   '🦊', '🐻', '🐼', '🐨', '🦁', '🐯',
@@ -28,9 +32,12 @@ export default function MyPage() {
 
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -58,18 +65,63 @@ export default function MyPage() {
     return map;
   }, [badges]);
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    const preview = URL.createObjectURL(file);
+    setAvatarFile(file);
+    setAvatarPreview(preview);
+    // ファイル選択時は絵文字選択を解除
+    setAvatar('');
+  }
+
+  function clearFileSelection(restoreAvatar?: string) {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (restoreAvatar !== undefined) setAvatar(restoreAvatar);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   async function handleSave() {
     if (!user || !name.trim()) return;
     setSaving(true);
     setError('');
+
+    let finalAvatar = avatar;
+
+    if (avatarFile) {
+      const supabase = createClient();
+      const path = `${user.id}/avatar`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+
+      if (uploadError) {
+        setError('画像のアップロードに失敗しました: ' + uploadError.message);
+        setSaving(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      // キャッシュバスティング用タイムスタンプを付与
+      finalAvatar = `${urlData.publicUrl}?t=${Date.now()}`;
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+
     const res = await fetch('/api/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: user.id, name: name.trim(), avatar }),
+      body: JSON.stringify({ id: user.id, name: name.trim(), avatar: finalAvatar }),
     });
     if (res.ok) {
       const updated = await res.json();
       setUser(updated);
+      setAvatar(updated.avatar);
       setSavedMsg('変更を保存しました！');
       setTimeout(() => setSavedMsg(''), 3000);
     } else {
@@ -95,7 +147,7 @@ export default function MyPage() {
   const acquiredCount = acquiredMap.size;
   const totalCount = BADGE_DEFINITIONS.length;
   const badgePct = totalCount > 0 ? Math.round((acquiredCount / totalCount) * 100) : 0;
-  const hasChanges = name.trim() !== user.name || avatar !== user.avatar;
+  const hasChanges = name.trim() !== user.name || avatar !== user.avatar || avatarFile !== null;
 
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
@@ -104,8 +156,8 @@ export default function MyPage() {
       {/* プロフィールカード */}
       <div className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] p-6">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-2xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-4xl shadow-[3px_3px_0_#2C2C2C] flex-shrink-0">
-            {user.avatar}
+          <div className="w-20 h-20 rounded-2xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-4xl shadow-[3px_3px_0_#2C2C2C] flex-shrink-0 overflow-hidden">
+            <UserAvatar avatar={user.avatar} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xl font-extrabold text-[#1A1A1A] truncate">{user.name}</p>
@@ -216,14 +268,48 @@ export default function MyPage() {
           {/* アバター */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">アバター</label>
+
+            {/* 写真アップロード */}
+            <div className="flex items-center gap-3 mb-4 p-3 bg-[#FAFAFA] rounded-xl border-[2px] border-gray-200">
+              <div className="w-16 h-16 rounded-xl border-[3px] border-[#2C2C2C] bg-white flex items-center justify-center text-3xl shadow-[2px_2px_0_#2C2C2C] flex-shrink-0 overflow-hidden">
+                {avatarPreview
+                  ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+                  : <UserAvatar avatar={avatar || user.avatar} />
+                }
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 bg-white border-[2px] border-[#2C2C2C] rounded-xl text-sm font-bold shadow-[0_2px_0_#2C2C2C] hover:shadow-[0_4px_0_#2C2C2C] hover:-translate-y-0.5 transition-all">
+                  📷 写真を選ぶ
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+                {avatarFile && (
+                  <button
+                    type="button"
+                    onClick={() => clearFileSelection(user?.avatar ?? '')}
+                    className="text-xs text-gray-400 font-bold hover:text-gray-600 text-left transition-colors"
+                  >
+                    写真を取り消す ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 絵文字グリッド */}
+            <p className="text-xs font-bold text-gray-500 mb-2">または絵文字から選ぶ</p>
             <div className="grid grid-cols-6 gap-2">
               {AVATARS.map((a) => (
                 <button
                   key={a}
                   type="button"
-                  onClick={() => setAvatar(a)}
+                  onClick={() => clearFileSelection(a)}
                   className={`text-2xl p-2 rounded-xl transition-all border-[2px] ${
-                    avatar === a
+                    !avatarFile && avatar === a
                       ? 'bg-[#4F46E5]/10 border-[#4F46E5] scale-110 shadow-[0_2px_0_#4F46E5]'
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                   }`}
@@ -234,10 +320,13 @@ export default function MyPage() {
             </div>
           </div>
 
-          {/* 現在のアバタープレビュー */}
+          {/* プレビュー */}
           <div className="flex items-center gap-3 p-4 bg-[#FAFAFA] rounded-xl border-[2px] border-gray-200">
-            <div className="w-14 h-14 rounded-xl border-[3px] border-[#2C2C2C] bg-white flex items-center justify-center text-3xl shadow-[2px_2px_0_#2C2C2C]">
-              {avatar}
+            <div className="w-14 h-14 rounded-xl border-[3px] border-[#2C2C2C] bg-white flex items-center justify-center text-3xl shadow-[2px_2px_0_#2C2C2C] overflow-hidden">
+              {avatarPreview
+                ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+                : <UserAvatar avatar={avatar || user.avatar} />
+              }
             </div>
             <div>
               <p className="font-extrabold text-[#1A1A1A]">{name || '（名前を入力）'}</p>

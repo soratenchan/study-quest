@@ -9,6 +9,7 @@ import { getXpForTask, xpProgress } from '@/lib/utils/xp';
 import { BADGE_DEFINITIONS } from '@/lib/utils/badge';
 import { createClient } from '@/lib/supabase/client';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
+import { UserAvatar } from '@/components/UserAvatar';
 
 const USER_COLORS = ['#E4000F', '#009AC7'];
 
@@ -24,8 +25,8 @@ function XpCard({ user, onClick }: { user: User; onClick: () => void }) {
       className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] p-5 cursor-pointer hover:shadow-[6px_6px_0_#2C2C2C] hover:-translate-y-0.5 transition-all"
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-14 h-14 rounded-xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-3xl shadow-[2px_2px_0_#2C2C2C]">
-          {user.avatar}
+        <div className="w-14 h-14 rounded-xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-3xl shadow-[2px_2px_0_#2C2C2C] overflow-hidden">
+          <UserAvatar avatar={user.avatar} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-extrabold text-[#1A1A1A] text-base truncate">{user.name}</p>
@@ -500,8 +501,8 @@ export default function DashboardPage() {
               <div className="p-6 border-b-[2px] border-gray-100">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-2xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-3xl shadow-[3px_3px_0_#2C2C2C]">
-                      {profileUser.avatar}
+                    <div className="w-16 h-16 rounded-2xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-3xl shadow-[3px_3px_0_#2C2C2C] overflow-hidden">
+                      <UserAvatar avatar={profileUser.avatar} />
                     </div>
                     <div>
                       <p className="text-lg font-extrabold text-[#1A1A1A]">{profileUser.name}</p>

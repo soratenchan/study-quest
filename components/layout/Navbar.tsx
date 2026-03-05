@@ -13,6 +13,7 @@ import {
   IconTimer,
   IconMyPage,
 } from "@/components/icons/NavIcons";
+import { CommentsDrawer } from "@/components/CommentsDrawer";
 
 interface NavbarProps {
   roomId: string;
@@ -75,10 +76,16 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // ページ遷移時にドロワーを閉じる
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!userId) return;
-    if (pathname.includes("/comments")) {
+    if (pathname.includes("/comments") || drawerOpen) {
       setUnread(0);
       return;
     }
@@ -88,7 +95,7 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
         if (Array.isArray(data)) setUnread(data.length);
       })
       .catch(() => {});
-  }, [userId, pathname]);
+  }, [userId, pathname, drawerOpen]);
 
   const handleCopy = async () => {
     try {
@@ -109,15 +116,18 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             {/* ロゴ */}
-            <Link href={`/room/${roomId}`} className="flex items-center gap-2">
+            <Link
+              href={`/room/${roomId}`}
+              className="flex items-center gap-2 flex-shrink-0 justify-start"
+            >
               <Image
                 src="/study-quest-logo.png"
                 alt="StudyQuest"
-                width={80}
-                height={80}
+                width={90}
+                height={90}
                 className="rounded-lg"
               />
-              <span className="font-extrabold text-white text-lg tracking-wide">
+              <span className="font-extrabold text-white text-base tracking-wide whitespace-nowrap">
                 StudyQuest
               </span>
             </Link>
@@ -133,16 +143,18 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-all ${
+                    className={`relative flex items-center gap-1 px-2 py-2 rounded-lg transition-all ${
                       isActive
                         ? "bg-white/15 shadow-[0_2px_0_rgba(255,255,255,0.1)]"
-                        : "opacity-40 hover:opacity-80 hover:bg-white/10"
+                        : "opacity-40 hover:opacity-90 hover:bg-white/10"
                     }`}
                   >
-                    <span className="w-[20px] h-[20px] flex items-center justify-center flex-shrink-0">
+                    <span className="w-[18px] h-[18px] flex items-center justify-center flex-shrink-0">
                       {item.icon}
                     </span>
-                    <span className={`text-xs ${isActive ? "text-white" : "text-gray-300"}`}>
+                    <span
+                      className={`text-xs font-bold whitespace-nowrap ${isActive ? "text-white" : "text-gray-300"}`}
+                    >
                       {item.label}
                     </span>
                     {item.isComment && unread > 0 && (
@@ -168,10 +180,10 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
         </div>
       </nav>
 
-      {/* モバイル下部固定バー */}
+      {/* モバイル下部固定バー（コメントを除いた6項目） */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1A1A2E] border-t-[3px] border-[#2C2C2C]">
-        <div className="flex items-center justify-around py-1 px-1">
-          {NAV_ITEMS.map((item) => {
+        <div className="flex items-center py-1">
+          {NAV_ITEMS.filter((item) => !item.isComment).map((item) => {
             const href = item.href(roomId);
             const isActive = item.exact
               ? pathname === href
@@ -180,28 +192,45 @@ export default function Navbar({ roomId, userId }: NavbarProps) {
               <Link
                 key={href}
                 href={href}
-                className={`relative flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all ${
-                  isActive
-                    ? "opacity-100"
-                    : "opacity-35 hover:opacity-70"
+                className={`relative flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg transition-all ${
+                  isActive ? "opacity-100" : "opacity-35 hover:opacity-70"
                 }`}
               >
                 <span className="w-5 h-5 flex items-center justify-center">
                   {item.icon}
                 </span>
-                <span className={`text-[9px] font-bold leading-none ${isActive ? "text-white" : "text-gray-400"}`}>
+                <span
+                  className={`text-[9px] font-bold leading-none ${isActive ? "text-white" : "text-gray-400"}`}
+                >
                   {item.label}
                 </span>
-                {item.isComment && unread > 0 && (
-                  <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E4000F] text-[9px] font-extrabold text-white px-1">
-                    {unread}
-                  </span>
-                )}
               </Link>
             );
           })}
         </div>
       </nav>
+
+      {/* コメント浮遊ボタン（モバイルのみ） */}
+      <button
+        onClick={() => setDrawerOpen(true)}
+        className="md:hidden fixed bottom-[72px] left-4 z-40 w-12 h-12 bg-[#1A1A2E] rounded-2xl border-[3px] border-[#2C2C2C] shadow-[0_4px_0_#2C2C2C] flex items-center justify-center transition-all hover:-translate-y-0.5 active:shadow-[0_2px_0_#2C2C2C] active:translate-y-0.5"
+      >
+        <IconComment size={22} />
+        {unread > 0 && (
+          <span className="absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#E4000F] text-[10px] font-extrabold text-white px-1 border-[2px] border-[#1A1A2E]">
+            {unread}
+          </span>
+        )}
+      </button>
+
+      {/* コメントドロワー */}
+      <CommentsDrawer
+        roomId={roomId}
+        userId={userId}
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onRead={() => setUnread(0)}
+      />
     </>
   );
 }

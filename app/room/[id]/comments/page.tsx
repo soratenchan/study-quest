@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Comment, User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { UserAvatar } from '@/components/UserAvatar';
 
 const STAMPS = [
   { emoji: '👍', label: 'いいね', color: '#3B82F6' },
@@ -201,8 +202,8 @@ export default function CommentsPage() {
               className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex items-end gap-2 max-w-[80%] ${isMine ? 'flex-row-reverse' : ''}`}>
-                <div className="w-9 h-9 rounded-xl border-[2px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-lg flex-shrink-0 shadow-[1px_1px_0_#2C2C2C]">
-                  {sender?.avatar || '👤'}
+                <div className="w-9 h-9 rounded-xl border-[2px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-lg flex-shrink-0 shadow-[1px_1px_0_#2C2C2C] overflow-hidden">
+                  <UserAvatar avatar={sender?.avatar || '👤'} />
                 </div>
                 <div>
                   {comment.stamp ? (

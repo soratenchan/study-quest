@@ -1,5 +1,6 @@
 'use client';
 import { useMemo } from 'react';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface Props {
   name: string;
@@ -68,7 +69,9 @@ export function HeatmapCalendar({ name, avatar, themeColor, activityMap }: Props
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl leading-none">{avatar}</span>
+        <span className="w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center text-xl leading-none flex-shrink-0">
+          <UserAvatar avatar={avatar} />
+        </span>
         <span className="text-sm font-extrabold text-[#1A1A1A]">{name}</span>
         <div className="ml-auto flex items-center gap-3 text-xs font-bold text-gray-500">
           <span>{totalActiveDays} 日間</span>

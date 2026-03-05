@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import { useParams, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import Navbar from '@/components/layout/Navbar';
-import MiniTimer from '@/components/layout/MiniTimer';
-import { TimerProvider, useTimer } from '@/contexts/TimerContext';
-import { WhatsNewModal } from '@/components/WhatsNewModal';
+import { useParams, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import Navbar from "@/components/layout/Navbar";
+import MiniTimer from "@/components/layout/MiniTimer";
+import { TimerProvider, useTimer } from "@/contexts/TimerContext";
+import { WhatsNewModal } from "@/components/WhatsNewModal";
 
 // グローバル保存モーダル（どのページでも表示される）
 function SaveModal() {
-  const { showSaveModal, memo, saving, setMemo, handleSaveLog, skipSave } = useTimer();
+  const { showSaveModal, memo, saving, setMemo, handleSaveLog, skipSave } =
+    useTimer();
   if (!showSaveModal) return null;
 
   return (
@@ -18,12 +19,14 @@ function SaveModal() {
       <div className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[8px_8px_0_#2C2C2C] p-6 w-full max-w-sm">
         <div className="text-center mb-5">
           <span className="text-5xl">🎉</span>
-          <h3 className="mt-2 text-lg font-extrabold text-gray-800">集中セッション完了！</h3>
+          <h3 className="mt-2 text-lg font-extrabold text-gray-800">
+            集中セッション完了！
+          </h3>
           <p className="text-sm text-gray-500 mt-1">学習ログを記録しますか？</p>
         </div>
         <textarea
           value={memo}
-          onChange={e => setMemo(e.target.value)}
+          onChange={(e) => setMemo(e.target.value)}
           placeholder="今日の学習内容（例：英単語50個）"
           rows={3}
           className="w-full px-3 py-2 border-[3px] border-[#2C2C2C] rounded-xl text-sm font-medium focus:outline-none focus:border-[#E4000F] resize-none"
@@ -40,7 +43,7 @@ function SaveModal() {
             disabled={saving || !memo.trim()}
             className="flex-1 py-2.5 bg-[#E4000F] text-white font-extrabold text-sm rounded-xl border-[3px] border-[#2C2C2C] shadow-[0_3px_0_#2C2C2C] hover:shadow-[0_5px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_1px_0_#2C2C2C] active:translate-y-0.5 transition-all disabled:opacity-50"
           >
-            {saving ? '保存中...' : '保存する'}
+            {saving ? "保存中..." : "保存する"}
           </button>
         </div>
       </div>
@@ -62,7 +65,9 @@ function RoomLayoutInner({
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
       {!isSetupPage && <Navbar roomId={roomId} userId={userId} />}
-      <main className={`flex-1 max-w-4xl mx-auto w-full px-4 py-6 ${!isSetupPage ? 'pb-28 md:pb-8' : ''}`}>
+      <main
+        className={`flex-1 max-w-4xl mx-auto w-full px-4 py-6 ${!isSetupPage ? "pb-28 md:pb-8" : ""}`}
+      >
         {children}
       </main>
       {!isSetupPage && <MiniTimer roomId={roomId} />}
@@ -95,13 +100,15 @@ export default function RoomLayout({
       if (!res.ok) return;
       const users = await res.json();
       const found = Array.isArray(users)
-        ? users.find((u: { auth_id: string; id: string }) => u.auth_id === authUser.id)
+        ? users.find(
+            (u: { auth_id: string; id: string }) => u.auth_id === authUser.id,
+          )
         : null;
       if (found) setUserId(found.id);
     });
   }, [roomId]);
 
-  const isSetupPage = pathname.endsWith('/setup');
+  const isSetupPage = pathname.endsWith("/setup");
 
   return (
     <TimerProvider roomId={roomId} userId={userId}>
