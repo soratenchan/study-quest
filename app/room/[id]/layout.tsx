@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import MiniTimer from '@/components/layout/MiniTimer';
 import { TimerProvider, useTimer } from '@/contexts/TimerContext';
+import { WhatsNewModal } from '@/components/WhatsNewModal';
 
 // グローバル保存モーダル（どのページでも表示される）
 function SaveModal() {
@@ -66,6 +67,7 @@ function RoomLayoutInner({
       </main>
       {!isSetupPage && <MiniTimer roomId={roomId} />}
       <SaveModal />
+      {!isSetupPage && <WhatsNewModal />}
     </div>
   );
 }

@@ -61,6 +61,16 @@ export default function BuddyPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+
+  function toggleGoal(id: string) {
+    setExpandedGoals(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -223,38 +233,43 @@ export default function BuddyPage() {
                 );
               }
 
+              const expanded = expandedGoals.has(goal.id);
               return (
                 <div
                   key={goal.id}
-                  className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] p-5"
+                  onClick={() => toggleGoal(goal.id)}
+                  className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] p-5 cursor-pointer hover:shadow-[6px_6px_0_#2C2C2C] transition-all"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-[#009AC7] text-white text-xs font-extrabold rounded-lg border-[2px] border-[#007BA3]">🌍 公開</span>
-                        <h3 className="font-extrabold text-[#1A1A1A] text-base truncate">{goal.title}</h3>
+                        <span className="px-2 py-0.5 bg-[#009AC7] text-white text-xs font-extrabold rounded-lg border-[2px] border-[#007BA3] flex-shrink-0">🌍 公開</span>
+                        <h3 className={`font-extrabold text-[#1A1A1A] text-base ${expanded ? '' : 'truncate'}`}>{goal.title}</h3>
                       </div>
                       {goal.description && (
-                        <p className="text-sm text-gray-500 font-medium mt-1.5 line-clamp-2">{goal.description}</p>
+                        <p className={`text-sm text-gray-500 font-medium mt-1.5 ${expanded ? '' : 'line-clamp-2'}`}>{goal.description}</p>
                       )}
                     </div>
+                    <span className="text-gray-400 text-xs font-bold flex-shrink-0 mt-1">
+                      {expanded ? '▲' : '▼'}
+                    </span>
                   </div>
 
-                  {/* タスク一覧 (最大3件) */}
+                  {/* タスク一覧 */}
                   {tasks.length > 0 && (
                     <div className="mt-4 space-y-1.5">
-                      {tasks.slice(0, 3).map((task) => (
+                      {(expanded ? tasks : tasks.slice(0, 3)).map((task) => (
                         <div key={task.id} className="flex items-center gap-2 text-sm">
                           <span className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center text-xs ${task.is_completed ? 'bg-[#4CAF50] text-white' : 'bg-gray-200'}`}>
                             {task.is_completed ? '✓' : ''}
                           </span>
-                          <span className={`font-medium truncate ${task.is_completed ? 'line-through text-gray-400' : 'text-[#1A1A1A]'}`}>
+                          <span className={`font-medium ${expanded ? '' : 'truncate'} ${task.is_completed ? 'line-through text-gray-400' : 'text-[#1A1A1A]'}`}>
                             {task.title}
                           </span>
                         </div>
                       ))}
-                      {tasks.length > 3 && (
-                        <p className="text-xs text-gray-400 font-medium pl-6">...他 {tasks.length - 3} タスク</p>
+                      {!expanded && tasks.length > 3 && (
+                        <p className="text-xs text-[#009AC7] font-bold pl-6">▼ 他 {tasks.length - 3} タスクを見る</p>
                       )}
                     </div>
                   )}
@@ -263,9 +278,13 @@ export default function BuddyPage() {
                   <GoalProgressBar tasks={tasks} />
 
                   {/* 応援ボタン */}
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-4 flex justify-between items-center">
+                    <span className="text-xs text-gray-400 font-bold">
+                      {expanded ? '▲ 閉じる' : `▼ すべて見る（${tasks.length}タスク）`}
+                    </span>
                     <Link
                       href={`/room/${roomId}/comments`}
+                      onClick={e => e.stopPropagation()}
                       className="px-4 py-2 bg-white text-[#1A1A1A] font-extrabold text-sm rounded-xl border-[2px] border-[#2C2C2C] shadow-[0_3px_0_#2C2C2C] hover:shadow-[0_5px_0_#2C2C2C] hover:-translate-y-0.5 active:shadow-[0_1px_0_#2C2C2C] active:translate-y-0.5 transition-all"
                     >
                       応援する 💪

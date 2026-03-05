@@ -5,7 +5,20 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Comment, User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 
-const STAMPS = ['👍', '🎉', '💪', '🔥', '⭐', '❤️', '👏', '🚀', '✨', '🙌', '💯', '🎯'];
+const STAMPS = [
+  { emoji: '👍', label: 'いいね', color: '#3B82F6' },
+  { emoji: '🎉', label: 'やった！', color: '#F59E0B' },
+  { emoji: '💪', label: 'ガンバレ', color: '#E4000F' },
+  { emoji: '🔥', label: '燃えてる', color: '#F97316' },
+  { emoji: '⭐', label: 'スゴイ', color: '#EAB308' },
+  { emoji: '❤️', label: '応援', color: '#EC4899' },
+  { emoji: '👏', label: '拍手', color: '#8B5CF6' },
+  { emoji: '🚀', label: 'GO！', color: '#6366F1' },
+  { emoji: '✨', label: 'キラキラ', color: '#F59E0B' },
+  { emoji: '🙌', label: 'やったね', color: '#10B981' },
+  { emoji: '💯', label: '完璧', color: '#E4000F' },
+  { emoji: '🎯', label: 'ナイス', color: '#009AC7' },
+];
 
 export default function CommentsPage() {
   const params = useParams();
@@ -126,8 +139,8 @@ export default function CommentsPage() {
     sendComment(message.trim(), null);
   }
 
-  function handleSendStamp(stamp: string) {
-    sendComment(null, stamp);
+  function handleSendStamp(emoji: string) {
+    sendComment(null, emoji);
   }
 
   if (loading) {
@@ -180,6 +193,7 @@ export default function CommentsPage() {
         {comments.map((comment) => {
           const isMine = comment.from_user_id === userId;
           const sender = isMine ? currentUser : buddyUser;
+          const stampDef = comment.stamp ? STAMPS.find(s => s.emoji === comment.stamp) : null;
 
           return (
             <div
@@ -193,13 +207,23 @@ export default function CommentsPage() {
                 <div>
                   {comment.stamp ? (
                     <div
-                      className={`px-4 py-3 rounded-2xl text-4xl border-[2px] border-[#2C2C2C] ${
-                        isMine
-                          ? 'bg-[#FFF3CD] shadow-[2px_2px_0_#2C2C2C]'
-                          : 'bg-white shadow-[2px_2px_0_#2C2C2C]'
-                      }`}
+                      className="px-5 py-3 rounded-2xl border-[2px] shadow-[2px_2px_0] flex flex-col items-center gap-1"
+                      style={stampDef ? {
+                        borderColor: stampDef.color,
+                        backgroundColor: `${stampDef.color}18`,
+                        boxShadow: `2px 2px 0 ${stampDef.color}66`,
+                      } : {
+                        borderColor: '#2C2C2C',
+                        backgroundColor: isMine ? '#FFF3CD' : 'white',
+                        boxShadow: '2px 2px 0 #2C2C2C',
+                      }}
                     >
-                      {comment.stamp}
+                      <span className="text-4xl leading-none">{comment.stamp}</span>
+                      {stampDef && (
+                        <span className="text-xs font-extrabold leading-none" style={{ color: stampDef.color }}>
+                          {stampDef.label}
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div
@@ -230,15 +254,23 @@ export default function CommentsPage() {
 
       {/* スタンプピッカー */}
       {showStamps && (
-        <div className="grid grid-cols-6 gap-2 p-3 bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] mb-3">
+        <div className="grid grid-cols-4 gap-2 p-3 bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] mb-3">
           {STAMPS.map((stamp) => (
             <button
-              key={stamp}
-              onClick={() => handleSendStamp(stamp)}
+              key={stamp.emoji}
+              onClick={() => handleSendStamp(stamp.emoji)}
               disabled={submitting}
-              className="text-2xl p-2 hover:bg-[#FAFAFA] hover:scale-110 rounded-xl transition-all disabled:opacity-50 border-[2px] border-transparent hover:border-gray-200"
+              className="flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all disabled:opacity-50 hover:scale-105 active:scale-95 border-[2px] shadow-[0_2px_0]"
+              style={{
+                borderColor: stamp.color,
+                backgroundColor: `${stamp.color}18`,
+                boxShadow: `0 2px 0 ${stamp.color}66`,
+              }}
             >
-              {stamp}
+              <span className="text-2xl leading-none">{stamp.emoji}</span>
+              <span className="text-[9px] font-extrabold leading-none mt-0.5" style={{ color: stamp.color }}>
+                {stamp.label}
+              </span>
             </button>
           ))}
         </div>

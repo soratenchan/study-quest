@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 export type Phase = 'work' | 'shortBreak' | 'longBreak';
 
 export const PHASE_CONFIG: Record<Phase, { label: string; color: string; emoji: string }> = {
-  work:       { label: '集中',   color: '#E4000F', emoji: '⚔️' },
+  work:       { label: '集中',   color: '#4F46E5', emoji: '⚔️' },
   shortBreak: { label: '小休憩', color: '#009AC7', emoji: '☕' },
   longBreak:  { label: '長休憩', color: '#22c55e', emoji: '🌿' },
 };
