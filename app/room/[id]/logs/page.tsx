@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { StudyLog, User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export default function LogsPage() {
   const params = useParams();
@@ -164,8 +165,8 @@ export default function LogsPage() {
                 }`}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl border-[2px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-xl shadow-[1px_1px_0_#2C2C2C]">
-                    {user?.avatar || '👤'}
+                  <div className="w-10 h-10 rounded-xl border-[2px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-xl shadow-[1px_1px_0_#2C2C2C] overflow-hidden">
+                    <UserAvatar avatar={user?.avatar || '👤'} />
                   </div>
                   <div className="flex-1">
                     <span className="text-sm font-extrabold text-[#1A1A1A]">

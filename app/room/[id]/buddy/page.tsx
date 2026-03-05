@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { User, Goal, Task, Badge } from '@/types';
+import { UserAvatar } from '@/components/UserAvatar';
 import { xpProgress } from '@/lib/utils/xp';
 import { BADGE_DEFINITIONS } from '@/lib/utils/badge';
 import { createClient } from '@/lib/supabase/client';
@@ -166,8 +167,8 @@ export default function BuddyPage() {
       {/* バディプロフィールカード */}
       <div className="bg-white rounded-2xl border-[3px] border-[#2C2C2C] shadow-[4px_4px_0_#2C2C2C] p-6">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-2xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-4xl shadow-[3px_3px_0_#2C2C2C]">
-            {buddy.avatar}
+          <div className="w-20 h-20 rounded-2xl border-[3px] border-[#2C2C2C] bg-[#FAFAFA] flex items-center justify-center text-4xl shadow-[3px_3px_0_#2C2C2C] overflow-hidden">
+            <UserAvatar avatar={buddy.avatar} />
           </div>
           <div className="flex-1">
             <p className="text-xl font-extrabold text-[#1A1A1A]">{buddy.name}</p>
